@@ -3,7 +3,7 @@
 Full-stack e-commerce application with .NET 9.0 backend API, Angular 20.3.0 frontend, and Supabase database.
 
 
-Both have the option to either choose HTTP or HTTPS for running the applications. Look into the README for that.
+Both have the option to either choose HTTP or HTTPS for running the applications.
 Depending on the HTTP/HTTPS-mode, the routes have to be configured in the frontend in file (HTTP by default):
 sdk_ec_frontend\ec_frontend\src\environments\environment.ts
 
