@@ -2,6 +2,26 @@
 
 Full-stack e-commerce application with .NET 9.0 backend API, Angular 20.3.0 frontend, and Supabase database.
 
+
+Both have the option to either choose HTTP or HTTPS for running the applications. Look into the README for that.
+Depending on the HTTP/HTTPS-mode, the routes have to be configured in the frontend in file (HTTP by default):
+sdk_ec_frontend\ec_frontend\src\environments\environment.ts
+
+
+
+Important Accounts (Especially admin for admin features):
+
+Admin: 
+Email: admin@gmail.com
+password: adminadmin
+
+Regular customer:
+Email: foo@gmail.com
+password: foofoofoo
+
+
+
+
 ## 📋 Tech Stack
 
 - **Frontend**: Angular 20.3.0
