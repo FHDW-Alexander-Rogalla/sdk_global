@@ -1,0 +1,90 @@
+<div class="cart-container">
+	<h1>Your Cart</h1>
+
+	<div *ngIf="loading" class="state">Loading cart...</div>
+	<div *ngIf="error" class="state error">{{ error }}</div>
+	<div *ngIf="!loading && cartItems.length === 0" class="state empty">Your cart is empty.</div>
+
+	<!-- Checkout Error Message -->
+	<div *ngIf="checkoutError" class="checkout-error-banner">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<circle cx="12" cy="12" r="10"></circle>
+			<line x1="12" y1="8" x2="12" y2="12"></line>
+			<line x1="12" y1="16" x2="12.01" y2="16"></line>
+		</svg>
+		<span>{{ checkoutError }}</span>
+		<button class="close-error" (click)="checkoutError = null">×</button>
+	</div>
+
+	<!-- Active Items Section -->
+	<div *ngIf="!loading && activeItems.length > 0">
+		<h2 class="section-title">Items ({{ activeItems.length }})</h2>
+		<div class="cart-grid">
+			<div *ngFor="let item of activeItems" class="cart-card">
+				<div class="cart-image">
+					<img [src]="item.product?.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'" [alt]="item.product?.name" />
+				</div>
+				<div class="cart-info">
+					<h3>{{ item.product?.name }}</h3>
+					<p class="description">{{ item.product?.description || 'No description available' }}</p>
+					<p class="unit-price">Unit: {{ item.product?.price | currency:'EUR' }}</p>
+					<p class="subtotal">Subtotal: {{ getItemTotal(item) | currency:'EUR' }}</p>
+				</div>
+				<div class="cart-actions">
+					<div class="action-row">
+						<div class="quantity-selector">
+							<label for="qty-{{ item.id }}">Quantity:</label>
+							<input id="qty-{{ item.id }}" type="number" min="1" [ngModel]="item.quantity" (ngModelChange)="onLocalQuantityChange(item, $event)" />
+							<button *ngIf="isQuantityDirty(item)" class="change-btn" (click)="applyQuantityChange(item)">Change</button>
+						</div>
+					</div>
+					<button class="delete-btn" (click)="removeItem(item)">Remove</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Inactive Items Section -->
+	<div *ngIf="!loading && hasInactiveItems" class="inactive-section">
+		<div class="section-header-with-action">
+			<h2 class="section-title">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<circle cx="12" cy="12" r="10"></circle>
+					<line x1="15" y1="9" x2="9" y2="15"></line>
+					<line x1="9" y1="9" x2="15" y2="15"></line>
+				</svg>
+				Unavailable Items ({{ inactiveItems.length }})
+			</h2>
+			<button class="remove-all-btn" (click)="removeAllInactive()">Remove All Unavailable</button>
+		</div>
+		<p class="inactive-info">These products are no longer available and cannot be ordered. Please remove them from your cart.</p>
+		
+		<div class="cart-grid">
+			<div *ngFor="let item of inactiveItems" class="cart-card inactive-card">
+				<div class="inactive-overlay">UNAVAILABLE</div>
+				<div class="cart-image">
+					<img [src]="item.product?.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'" [alt]="item.product?.name" />
+				</div>
+				<div class="cart-info">
+					<h3>{{ item.product?.name }}</h3>
+					<p class="description">{{ item.product?.description || 'No description available' }}</p>
+					<p class="unit-price">Unit: {{ item.product?.price | currency:'EUR' }}</p>
+				</div>
+				<div class="cart-actions">
+					<button class="delete-btn" (click)="removeItem(item)">Remove</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Cart Footer -->
+	<div *ngIf="activeItems.length > 0" class="cart-footer">
+		<div class="total">Total: {{ getTotal() | currency:'EUR' }}</div>
+		<div class="footer-actions">
+			<button class="clear-btn" (click)="clearCart()" [disabled]="submittingOrder">Clear Cart</button>
+			<button class="order-btn" (click)="submitOrder()" [disabled]="submittingOrder || hasInactiveItems">
+				{{ submittingOrder ? 'Placing Order...' : 'Place Order' }}
+			</button>
+		</div>
+	</div>
+</div>

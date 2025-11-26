@@ -1,0 +1,161 @@
+<div class="admin-orders-container">
+  <div class="admin-header">
+    <h1>Order Management</h1>
+    <p class="subtitle">{{ filteredOrders().length }} {{ filteredOrders().length === 1 ? 'order' : 'orders' }}</p>
+  </div>
+
+  <!-- Filter & Sort Controls -->
+  <div class="controls-bar">
+    <div class="filter-group">
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Search by ID, customer name or email..."
+        [ngModel]="filterSearch()"
+        (ngModelChange)="filterSearch.set($event)">
+      
+      <select 
+        class="filter-select"
+        [ngModel]="filterStatus()"
+        (ngModelChange)="filterStatus.set($event)">
+        <option value="all">All Status</option>
+        @for (status of availableStatuses; track status) {
+          <option [value]="status">{{ formatStatus(status) }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="sort-group">
+      <select 
+        class="sort-select"
+        [ngModel]="sortBy()"
+        (ngModelChange)="sortBy.set($event)">
+        <option value="date">Sort by Date</option>
+        <option value="total">Sort by Total</option>
+        <option value="status">Sort by Status</option>
+      </select>
+      
+      <button 
+        class="sort-order-btn" 
+        (click)="sortDesc.set(!sortDesc())"
+        [title]="sortDesc() ? 'Descending' : 'Ascending'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          @if (sortDesc()) {
+            <path d="M12 5v14M19 12l-7 7-7-7"></path>
+          } @else {
+            <path d="M12 19V5M5 12l7-7 7 7"></path>
+          }
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  @if (filteredOrders().length === 0) {
+    <div class="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"></path>
+        <path d="M9 2v6h6"></path>
+      </svg>
+      <h2>No Orders Found</h2>
+      <p>{{ filterStatus() !== 'all' || filterSearch() ? 'Try adjusting your filters' : 'There are no orders in the system yet.' }}</p>
+    </div>
+  } @else {
+    <div class="orders-list">
+      @for (order of filteredOrders(); track trackByOrderId($index, order)) {
+        <div class="order-card-compact">
+          <!-- Compact Header -->
+          <div class="order-row">
+            <div class="order-main">
+              <div class="order-id-section">
+                <span class="order-id">#{{ order.id }}</span>
+                <span class="order-date">{{ formatDate(order.orderDate) }}</span>
+              </div>
+              
+              <div class="customer-section">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>{{ getUserDisplay(order) }}</span>
+              </div>
+
+              <div class="items-badge" (click)="toggleExpand(order.id)" title="Click to view items">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                {{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.rotated]="isExpanded(order.id)">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+
+              <div class="total-amount">{{ order.totalAmount | currency:'EUR' }}</div>
+            </div>
+
+            <div class="order-actions">
+              @if (editingOrderId === order.id) {
+                <select 
+                  [(ngModel)]="selectedStatus" 
+                  class="status-select-compact"
+                  (keydown.escape)="cancelEdit()"
+                  (keydown.enter)="saveStatus(order.id)">
+                  @for (status of statusOptions; track status) {
+                    <option [value]="status">{{ formatStatus(status) }}</option>
+                  }
+                </select>
+                <button class="btn-icon btn-save" (click)="saveStatus(order.id)" title="Save">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+                <button class="btn-icon btn-cancel" (click)="cancelEdit()" title="Cancel">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              } @else {
+                <span class="status-badge-compact" [ngClass]="getStatusClass(order.status)">
+                  {{ formatStatus(order.status) }}
+                </span>
+                <button class="btn-icon btn-edit" (click)="startEdit(order)" title="Edit Status">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Expandable Items -->
+          @if (isExpanded(order.id)) {
+            <div class="order-items-expanded">
+              @for (item of order.items; track item.id) {
+                <div class="item-row-compact">
+                  @if (item.product && item.product.imageUrl) {
+                    <img [src]="item.product.imageUrl" [alt]="item.product.name || 'Product'" class="item-thumb">
+                  } @else {
+                    <div class="item-thumb-placeholder">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      </svg>
+                    </div>
+                  }
+                  <span class="item-name-compact">{{ item.product?.name || ('Product #' + item.productId) }}</span>
+                  <span class="item-qty">{{ item.quantity }}x</span>
+                  <span class="item-price">{{ item.priceAtPurchase | currency:'EUR' }}</span>
+                  <span class="item-subtotal">{{ item.quantity * item.priceAtPurchase | currency:'EUR' }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+

@@ -1,0 +1,60 @@
+<div class="register-container">
+  <div class="register-card">
+    <h2>Registration</h2>
+    
+    @if (errorMessage) {
+      <div class="error-message">
+        <strong>ERROR:</strong> {{ errorMessage }}
+      </div>
+    }
+
+    <form #registerForm="ngForm" (ngSubmit)="onSubmit(email.value, username.value, password.value)">
+      <div class="form-group">
+        <label for="email">E-Mail</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email"
+          #email="ngModel"
+          [(ngModel)]="formData.email"
+          required
+          placeholder="name@example.com"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="username">User name</label>
+        <input 
+          type="text" 
+          id="username" 
+          name="username"
+          #username="ngModel"
+          [(ngModel)]="formData.username"
+          required
+          placeholder="Username"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password"
+          #password="ngModel"
+          [(ngModel)]="formData.password"
+          required
+          placeholder="••••••••"
+        />
+      </div>
+
+      <button type="submit" class="submit-btn" [disabled]="isLoading || !registerForm.valid">
+        {{ isLoading ? 'Registration in progress...' : 'Register' }}
+      </button>
+    </form>
+
+    <p class="login-link">
+      Already registered? <a href="/login">Go to Login</a>
+    </p>
+  </div>
+</div>

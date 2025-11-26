@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: ./ec_frontend
+      dockerfile: ../Dockerfile.http
+      target: development
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./ec_frontend:/app
+      - /app/node_modules

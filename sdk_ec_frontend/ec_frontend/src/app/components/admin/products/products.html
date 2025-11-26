@@ -1,0 +1,294 @@
+<div class="admin-products-container">
+  <div class="admin-header">
+    <h1>Product Management</h1>
+    <p class="subtitle">Create, edit, and manage products in the catalog</p>
+    <button class="btn-create" (click)="openCreateForm()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Add New Product
+    </button>
+  </div>
+
+  <!-- Product Form Modal -->
+  @if (isEditing || editingProductId !== null) {
+    <div class="modal-overlay" (click)="closeForm()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ editingProductId !== null ? 'Edit Product' : 'Create New Product' }}</h2>
+          <button class="btn-close" (click)="closeForm()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <form (ngSubmit)="saveProduct()">
+            <!-- Product Name -->
+            <div class="form-group">
+              <label for="name">Product Name *</label>
+              <input 
+                type="text" 
+                id="name" 
+                [(ngModel)]="productForm.name" 
+                name="name"
+                placeholder="Enter product name"
+                [class.error]="formErrors['name']"
+                required>
+              @if (formErrors['name']) {
+                <span class="error-message">{{ formErrors['name'] }}</span>
+              }
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea 
+                id="description" 
+                [(ngModel)]="productForm.description" 
+                name="description"
+                placeholder="Enter product description"
+                rows="4"></textarea>
+            </div>
+
+            <!-- Price -->
+            <div class="form-group">
+              <label for="price">Price (€) *</label>
+              <input 
+                type="number" 
+                id="price" 
+                [(ngModel)]="productForm.price" 
+                name="price"
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                [class.error]="formErrors['price']"
+                required>
+              @if (formErrors['price']) {
+                <span class="error-message">{{ formErrors['price'] }}</span>
+              }
+            </div>
+
+            <!-- Image URL -->
+            <div class="form-group">
+              <label for="imageUrl">Image URL</label>
+              <input 
+                type="url" 
+                id="imageUrl" 
+                [(ngModel)]="productForm.imageUrl" 
+                name="imageUrl"
+                placeholder="https://example.com/image.jpg">
+              @if (productForm.imageUrl) {
+                <div class="image-preview">
+                  <img [src]="productForm.imageUrl" alt="Preview" (error)="$event.target.src=''" />
+                </div>
+              }
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+              <button type="button" class="btn-cancel" (click)="closeForm()">Cancel</button>
+              <button type="submit" class="btn-save">
+                {{ editingProductId !== null ? 'Update Product' : 'Create Product' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Active Products Section -->
+  @if (activeProducts.length === 0 && inactiveProducts.length === 0) {
+    <div class="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+        <polyline points="21 15 16 10 5 21"></polyline>
+      </svg>
+      <h2>No Products Found</h2>
+      <p>Start by creating your first product.</p>
+    </div>
+  }
+
+  @if (activeProducts.length > 0) {
+    <div class="section-container">
+      <h2 class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        Active Products ({{ activeProducts.length }})
+      </h2>
+      <p class="section-info">These products are visible to customers and available for purchase.</p>
+      
+      <div class="products-grid">
+        @for (product of activeProducts; track trackByProductId($index, product)) {
+          <div class="product-card">
+            <!-- Product Image -->
+            <div class="product-image-container">
+              @if (product.imageUrl) {
+                <img [src]="product.imageUrl" [alt]="product.name" class="product-image">
+              } @else {
+                <div class="product-image-placeholder">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                </div>
+              }
+            </div>
+
+            <!-- Product Info -->
+            <div class="product-info">
+              <h3 class="product-name">{{ product.name }}</h3>
+              @if (product.description) {
+                <p class="product-description">{{ product.description }}</p>
+              }
+              <div class="product-meta">
+                <span class="product-price">{{ product.price | currency:'EUR' }}</span>
+                <span class="product-date">Created: {{ formatDate(product.createdAt) }}</span>
+              </div>
+            </div>
+
+            <!-- Product Actions -->
+            <div class="product-actions" [class.has-confirmation]="confirmingDeactivateId === product.id">
+              @if (confirmingDeactivateId === product.id) {
+                <div class="confirmation-row">
+                  <span class="confirmation-text">Deactivate this product?</span>
+                  <div class="confirmation-buttons">
+                    <button class="btn-cancel-confirm" (click)="cancelDeactivate()">
+                      Cancel
+                    </button>
+                    <button class="btn-confirm-delete" (click)="deleteProduct(product.id)">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      Yes, Deactivate
+                    </button>
+                  </div>
+                </div>
+              }
+              <div class="normal-buttons" [class.disabled]="confirmingDeactivateId === product.id">
+                <button class="btn-edit-product" (click)="openEditForm(product)" [disabled]="confirmingDeactivateId === product.id" title="Edit Product">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Edit
+                </button>
+                <button class="btn-delete-product" (click)="showDeactivateConfirmation(product.id)" [disabled]="confirmingDeactivateId === product.id" title="Deactivate Product">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                  Deactivate
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Inactive Products Section -->
+  @if (hasInactiveProducts) {
+    <div class="inactive-section">
+      <div class="section-header" (click)="toggleInactiveSection()">
+        <h2 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          Inactive Products ({{ inactiveProducts.length }})
+        </h2>
+        <button class="toggle-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [style.transform]="showInactive ? 'rotate(180deg)' : 'rotate(0deg)'">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+      </div>
+      <p class="section-info inactive-info">These products are hidden from customers and cannot be purchased. You can reactivate them at any time.</p>
+      
+      @if (showInactive) {
+        <div class="products-grid">
+          @for (product of inactiveProducts; track trackByProductId($index, product)) {
+            <div class="product-card inactive-card">
+              <div class="inactive-overlay">INACTIVE</div>
+              
+              <!-- Product Image -->
+              <div class="product-image-container">
+                @if (product.imageUrl) {
+                  <img [src]="product.imageUrl" [alt]="product.name" class="product-image">
+                } @else {
+                  <div class="product-image-placeholder">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                  </div>
+                }
+              </div>
+
+              <!-- Product Info -->
+              <div class="product-info">
+                <h3 class="product-name">{{ product.name }}</h3>
+                @if (product.description) {
+                  <p class="product-description">{{ product.description }}</p>
+                }
+                <div class="product-meta">
+                  <span class="product-price">{{ product.price | currency:'EUR' }}</span>
+                  <span class="product-date">Created: {{ formatDate(product.createdAt) }}</span>
+                </div>
+              </div>
+
+              <!-- Product Actions -->
+              <div class="product-actions" [class.has-confirmation]="confirmingActivateId === product.id">
+                @if (confirmingActivateId === product.id) {
+                  <div class="confirmation-row">
+                    <span class="confirmation-text">Reactivate this product?</span>
+                    <div class="confirmation-buttons">
+                      <button class="btn-cancel-confirm" (click)="cancelActivate()">
+                        Cancel
+                      </button>
+                      <button class="btn-confirm-activate" (click)="activateProduct(product.id)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Yes, Reactivate
+                      </button>
+                    </div>
+                  </div>
+                }
+                <div class="normal-buttons" [class.disabled]="confirmingActivateId === product.id">
+                  <button class="btn-edit-product" (click)="openEditForm(product)" [disabled]="confirmingActivateId === product.id" title="Edit Product">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Edit
+                  </button>
+                  <button class="btn-activate-product" (click)="showActivateConfirmation(product.id)" [disabled]="confirmingActivateId === product.id" title="Reactivate Product">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    Reactivate
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

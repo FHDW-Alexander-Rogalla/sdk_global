@@ -1,0 +1,177 @@
+<div class="orders-container">
+  <div class="orders-header">
+    <h1>My Orders</h1>
+    <p class="orders-subtitle">
+      @if (hasOrders()) {
+        You have {{ activeOrders().length }} {{ activeOrders().length === 1 ? 'active order' : 'active orders' }}
+      } @else {
+        No orders yet
+      }
+    </p>
+  </div>
+
+  @if (!hasOrders()) {
+    <div class="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"></path>
+        <path d="M9 2v6h6"></path>
+      </svg>
+      <h2>No orders found</h2>
+      <p>You haven't placed any orders yet.</p>
+      <a routerLink="/" class="shop-now-btn">Shop now</a>
+    </div>
+  } @else {
+    <!-- Active Orders -->
+    @if (activeOrders().length > 0) {
+      <div class="orders-section">
+        <h2 class="section-title">Active Orders</h2>
+        <div class="orders-list">
+          @for (order of activeOrders(); track trackByOrderId($index, order)) {
+            <div class="order-card">
+              <div class="order-header">
+                <div class="order-info">
+                  <h3>Order - {{ formatDate(order.orderDate) }}</h3>
+                </div>
+                <div class="order-header-actions">
+                  @if (canCancelOrder(order)) {
+                    <button class="btn-cancel-order" (click)="cancelOrder(order)" title="Cancel Order">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Cancel
+                    </button>
+                  }
+                  <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                    {{ getStatusText(order.status) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="order-items">
+                @for (item of order.items; track item.id) {
+                  <div class="order-item">
+                    @if (item.product && item.product.imageUrl) {
+                      <img [src]="item.product.imageUrl" [alt]="item.product.name" class="item-image">
+                    } @else {
+                      <div class="item-image-placeholder">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                          <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                      </div>
+                    }
+                    
+                    <div class="item-details">
+                      <h4>{{ item.product?.name || 'Product #' + item.productId }}</h4>
+                      @if (item.product && item.product.description) {
+                        <p class="item-description">{{ item.product.description }}</p>
+                      }
+                      <div class="item-meta">
+                        <span class="quantity">Quantity: {{ item.quantity }}</span>
+                        <span class="price">{{ item.priceAtPurchase | currency:'EUR' }} / piece</span>
+                      </div>
+                    </div>
+                    
+                    <div class="item-total">
+                      {{ item.priceAtPurchase * item.quantity | currency:'EUR' }}
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="order-footer">
+                <div class="order-total">
+                  <span class="total-label">Total:</span>
+                  <span class="total-amount">{{ getOrderTotal(order) | currency:'EUR' }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Order History -->
+    @if (completedOrders().length > 0) {
+      <div class="orders-section history-section">
+        <button class="history-toggle" (click)="toggleHistory()">
+          <h2 class="section-title">Order History ({{ completedOrders().length }})</h2>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.rotated]="showHistory">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        
+        @if (showHistory) {
+          <div class="orders-list">
+            @for (order of completedOrders(); track trackByOrderId($index, order)) {
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-info">
+              <h3>Order - {{ formatDate(order.orderDate) }}</h3>
+            </div>
+            <div class="order-header-actions">
+              @if (canCancelOrder(order)) {
+                <button class="btn-cancel-order" (click)="cancelOrder(order)" title="Cancel Order">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Cancel
+                </button>
+              }
+              <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                {{ getStatusText(order.status) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="order-items">
+            @for (item of order.items; track item.id) {
+              <div class="order-item">
+                @if (item.product && item.product.imageUrl) {
+                  <img [src]="item.product.imageUrl" [alt]="item.product.name" class="item-image">
+                } @else {
+                  <div class="item-image-placeholder">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                  </div>
+                }
+                
+                <div class="item-details">
+                  <h4>{{ item.product?.name || 'Product #' + item.productId }}</h4>
+                  @if (item.product && item.product.description) {
+                    <p class="item-description">{{ item.product.description }}</p>
+                  }
+                  <div class="item-meta">
+                    <span class="quantity">Quantity: {{ item.quantity }}</span>
+                    <span class="price">{{ item.priceAtPurchase | currency:'EUR' }} / piece</span>
+                  </div>
+                </div>
+                
+                <div class="item-total">
+                  {{ item.priceAtPurchase * item.quantity | currency:'EUR' }}
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="order-footer">
+            <div class="order-total">
+              <span class="total-label">Total:</span>
+              <span class="total-amount">{{ getOrderTotal(order) | currency:'EUR' }}</span>
+            </div>
+          </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
+
