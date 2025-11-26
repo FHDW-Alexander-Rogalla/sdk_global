@@ -64,7 +64,7 @@ dotnet dev-certs https --trust
 ```
 
 **Start the application with HTTPS:**
-
+- Backend API configuration: Update `sdk_ec_frontend/ec_frontend/src/environments/environment.ts` to use `https://localhost:7129/api`
 ```powershell
 docker compose -f docker-compose.https.yaml up --build
 ```
@@ -72,7 +72,6 @@ docker compose -f docker-compose.https.yaml up --build
 **Access the application:**
 - Frontend: http://localhost:4200 (frontend serves via HTTP but connects to HTTPS backend)
 - Backend API: https://localhost:7129
-- Backend API configuration: Update `sdk_ec_frontend/ec_frontend/src/environments/environment.ts` to use `https://localhost:7129/api`
 
 ---
 
