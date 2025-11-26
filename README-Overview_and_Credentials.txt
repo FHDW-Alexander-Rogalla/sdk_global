@@ -9,6 +9,7 @@ API - .NET 9.0 SDK
 Database - Supabase
 
 
+Global: https://github.com/FHDW-Alexander-Rogalla/sdk_global
 Frontend-Repo-URL: https://github.com/FHDW-Alexander-Rogalla/sdk_ec_frontend
 API-Repo-URL: https://github.com/FHDW-Alexander-Rogalla/sdk_ec_backend_api
 
