@@ -1,0 +1,41 @@
+services:
+  # Backend API Service (HTTP Mode)
+  backend:
+    build:
+      context: ./sdk_ec_backend_api/Sdk_EC_Backend
+      dockerfile: Dockerfile
+    container_name: sdk-ec-backend-http
+    ports:
+      - "5139:5139"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5139
+    networks:
+      - sdk-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5139/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service (HTTP Mode)
+  frontend:
+    build:
+      context: ./sdk_ec_frontend/ec_frontend
+      dockerfile: ../Dockerfile.http
+      target: development
+    container_name: sdk-ec-frontend-http
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./sdk_ec_frontend/ec_frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - sdk-network
+
+networks:
+  sdk-network:
+    driver: bridge

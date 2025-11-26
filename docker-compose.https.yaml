@@ -1,0 +1,48 @@
+services:
+  # Backend API Service (HTTPS Mode)
+  backend:
+    build:
+      context: ./sdk_ec_backend_api/Sdk_EC_Backend
+      dockerfile: Dockerfile
+    container_name: sdk-ec-backend-https
+    ports:
+      - "5139:5139"
+      - "7129:7129"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:7129;http://+:5139
+      - USE_HTTPS=true
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=YourSecurePassword123
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+    volumes:
+      # Mount the certificate directory (Windows path style)
+      - ${USERPROFILE}/.aspnet/https:/https:ro
+    networks:
+      - sdk-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-k", "https://localhost:7129/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service (HTTPS Mode)
+  frontend:
+    build:
+      context: ./sdk_ec_frontend/ec_frontend
+      dockerfile: ../Dockerfile.https
+      target: development
+    container_name: sdk-ec-frontend-https
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./sdk_ec_frontend/ec_frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - sdk-network
+
+networks:
+  sdk-network:
+    driver: bridge
